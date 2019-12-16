@@ -6,7 +6,7 @@
 
 double	EPS = 10e-8;
 
-class Matrix:
+class Matrix
 {
 public:
     std::vector<std::vector<double>> value;
@@ -16,12 +16,10 @@ public:
     Matrix(size_t count)
     {
         size = count;
-        value.resize(count);
         for (int i = 0; i != size; i++)
         {
             value.push_back(std::vector<double>(count));
         }
-        std::cout << "I can construct!\n";
     }
     ~Matrix(){
 
@@ -33,54 +31,96 @@ public:
         file.open("matrixexample.txt");
 
         for (int i = 0; i != size; i++)
-            for (int j = 0; j <= size; j++)
-            {
-                double numd;
-                file >>  numb;
-                value[i][j] = numb;
-            }
+            for (int j = 0; j != size; j++)
+                file >> value[i][j];
         file.close();
     }
+    void trunc()
+    {
+        double temp;
+        for (int i = 0; i != size; i++)
+        {
+            for (int j = i+1; j != size; j++)
+            {
+                temp = value[i][j];
+                value[i][j] = value[j][i];
+                value[j][i] = temp;
+            }
+        }
+    }
+    void print()
+    {
+        for (int n = 0; n != size; n++)
+        {
+            std::cout << "\n";
+            for (int j = 0; j != size; j++)
+            {
+                std::cout << std::setw(8) << value[n][j] << '\t';
+            }
+        }
+        std::cout << "\n";
+    }
 
-    Matrix& operator + (const Matrix &A, const Matrix &B)
+    void onebyone()
     {
-        if (A.size != B.size && size != B.size)
+        for (int i = 0; i != size; i++)
+            for (int j = 0; j != size; j++)
+            {
+                if (i == j)
+                    value[i][i] = 1;
+                else
+                    value[i][j] = 0;
+            }
+    }
+    friend void cpy(Matrix &A, Matrix& B)
+    {
+        for (int i = 0; i != A.size; i++)
+            for (int j = 0; j != A.size; j++)
+                B.value[i][j] = A.value[i][j];
+    }
+
+    friend Matrix operator + (const Matrix &A, const Matrix &B)
+    {
+        Matrix C(A.size);
+        if (A.size != B.size)
             std::cout << "Not correct size A and B";
         else
         {
             for (int i = 0; i != A.size; i++) {
                 for (int j = 0; j != A.size; j++)
-                    value[i][j] = A.value[i][j] + B.value[i][j];
+                    C.value[i][j] = A.value[i][j] + B.value[i][j];
             }
         }
-        return *this;
+        return C;
     }
-    Matrix& operator - (const Matrix &A, const Matrix &B)
+    friend Matrix operator - (const Matrix &A, const Matrix &B)
     {
-        if (A.size != B.size && size != B.size)
+        Matrix C(A.size);
+        if (A.size != B.size && C.size != B.size)
             std::cout << "Not correct size A and B";
         else
         {
             for (int i = 0; i != A.size; i++) {
                 for (int j = 0; j != A.size; j++)
-                    value[i][j] = A.value[i][j] - B.value[i][j];
+                    C.value[i][j] = A.value[i][j] - B.value[i][j];
             }
         }
-        return *this;
+        return C;
     }
-    friend Matrix& operator *(const Matrix &A, const Matrix &B)
+    friend Matrix operator *(const Matrix &A, const Matrix &B)
     {
+        Matrix C(A.size);
         for (int i = 0; i != A.size; i++)
             for (int j = 0; j != B.size; j++)
             {
-                double sum = 0;
+                double sum = 0.0;
                 for (int k = 0; k != A.size; k++)
-                    sum += A.value[j][k]*B.value[k][j];
-                value[i][j] = sum;
+                    sum += A.value[i][k]*B.value[k][j];
+                C.value[i][j] = sum;
             }
-        return *this;
+        return C;
     }
-    friend Matrix& operator * (Matrix &A, double c)
+    friend Matrix operator * (Matrix &A, double c)
     {
         for (int i = 0; i != A.size; i++) {
             for (int j = 0; j != A.size; j++)
@@ -100,4 +140,11 @@ public:
         }
         return c;
     }
+//     Matrix& operator = (const Matrix &C)
+//    {
+//        for (int i = 0; i != size; i++)
+//            for (int j = 0; j != size; j++)
+//                value[i][j] = C.value[i][j];
+//    }
+    void QR(Matrix &A);
 };

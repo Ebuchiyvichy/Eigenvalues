@@ -1,9 +1,10 @@
 #include "MatrixClass.h"
 
-Matrix& Tmatrix(const Matrix &A, int k, int l)
+
+Matrix Tmatrix(const Matrix &A, int k, int l)
 {
-    Matrix &T(A.size);
-    for (int i = 1; i != A.size; i++)
+    Matrix T(A.size);
+    for (int i = 0; i != A.size; i++)
         for (int j = 0; j!= A.size; j++) {
             if (i != j)
                 T.value[i][j] = 0;
@@ -17,12 +18,95 @@ Matrix& Tmatrix(const Matrix &A, int k, int l)
      return(T);
 };
 
-Matrix& Hessenberg(Matrix &A)
+Matrix Hessenberg(Matrix &A)
 {
-    Matrix &C(A.size);
-    for (int i = 2; i != A.size; i++)
-        for (int j = 0; j != i-1; j++)
+    Matrix C(A.size);
+    Matrix T(A.size);
+    for (int j = 0; j != A.size - 2; j++)
+        for (int i = j+2; i != A.size; i++) {
+            T = Tmatrix(A, j+1, i);
+            C = T * A;
+            T.trunc();
+            A = C * T;
+        }
+    return A;
+}
+
+void Matrix::QR(Matrix &A)
+{
+    double	c;
+    double  s;
+    double  tmp;
+
+    for (int k = 0; k < size; k++)
+    {
+        for (int i = k+1; i < size; i++)
         {
-            C = Tmatrix(A,i,j)*A;
-            A = C* // обратная матрица к Т
+            if (fabs(A.value[k][i]) > 10e-8)
+            {
+                c = A.value[k][k] / sqrt(A.value[k][k] * A.value[k][k] + A.value[i][k] * A.value[i][k]);
+                s = A.value[i][k] / sqrt(A.value[k][k] * A.value[k][k] + A.value[i][k] * A.value[i][k]);
+                for (int j = 0; j <= i; j++) // change T-matrix
+                     {
+                        tmp = value[k][j];
+                        value[k][j] = value[k][j] * c + value[i][j] * s;
+                        value[i][j] = c * value[i][j] - s * tmp;
+                    }
+                for (int j = k; j < size; j++) // change A-matrix
+                    {
+                        tmp = A.value[k][j];
+                        A.value[k][j] = c * A.value[k][j] + s * A.value[i][j];
+                        A.value[i][j] = c * A.value[i][j] - s * tmp;
+                    }
+            }
+        }
+    }
+//    std::cout << "QR method matrix R:" << std::endl;
+//    A.print();
+//
+//    std::cout << "QR method matrix T:" << std::endl;
+//    print();
+trunc();
+}
+
+bool buttomabs(const Matrix &A)
+{
+//    for(int i = 0; i != A.size; i++)
+//    {
+//        double sum = 0;
+//        for (int j = 0; j != i; j++)
+//            sum += fabs(A.value[i][j]);
+//        std::cout << sum <<"\n";
+//        if (sum >  pow(10,-4))
+//            return true;
+//    }
+//    return false;
+    for(int i = 0; i != A.size; i++ )
+        if (fabs(A.value[i][i-1]) > pow(10,-4) )
+            return true;
+        return false;
+}
+
+std::vector<double> eigenvalues(Matrix &A)
+{
+    Matrix T(A.size);
+    Matrix R(A.size);
+    Matrix Ak(A.size);
+    Ak = A;
+    std::vector<double> lambda(A.size);
+    T.onebyone();
+    int iterations = 0;
+        Ak = Hessenberg(A);
+        do {
+            iterations++;
+            R = Ak;
+            T.QR(R);
+            Ak = R * T;
+        } while (buttomabs(Ak));
+    for (int i = 0; i != A.size; i++)
+        lambda[i] = Ak.value[i][i];
+    Ak.print();
+    //алгоритм со
+    std::cout << "Number of iterations: " << iterations << "\n";
+    return lambda;
 }
