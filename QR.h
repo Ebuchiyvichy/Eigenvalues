@@ -1,3 +1,5 @@
+
+//#include "Gauss.cpp"
 #include "MatrixClass.h"
 
 
@@ -32,60 +34,48 @@ Matrix Hessenberg(Matrix &A)
     return A;
 }
 
-void Matrix::QR(size_t n, Matrix &A)
+bool buttomabs(const Matrix &A, int n)
 {
-    double	c;
-    double  s;
-    double  tmp;
-    size = n;
+    if (fabs(A.value[n][n-1]) > pow(10,-4))
+        return true;
+    return false;
+}
 
-    for (int k = 0; k < size; k++)
+void qr(Matrix& A, Matrix& R, Matrix& T, int n)
+{
+    double c, s;
+    double vspom;
+    T.onebyone();
+    R = A;
+
+    for (int j = 0; j < n; j++)
     {
-        for (int i = k+1; i < size; i++)
+        for (int i = j + 1; i < n; i++)
         {
-            if (fabs(A.value[k][i]) > 10e-8)
+            if (fabs(R.value[i][j]) > EPS)
             {
-                c = A.value[k][k] / sqrt(A.value[k][k] * A.value[k][k] + A.value[i][k] * A.value[i][k]);
-                s = A.value[i][k] / sqrt(A.value[k][k] * A.value[k][k] + A.value[i][k] * A.value[i][k]);
-                for (int j = 0; j <= i; j++) // change T-matrix
-                     {
-                        tmp = value[k][j];
-                        value[k][j] = value[k][j] * c + value[i][j] * s;
-                        value[i][j] = c * value[i][j] - s * tmp;
-                    }
-                for (int j = k; j < size; j++) // change A-matrix
-                    {
-                        tmp = A.value[k][j];
-                        A.value[k][j] = c * A.value[k][j] + s * A.value[i][j];
-                        A.value[i][j] = c * A.value[i][j] - s * tmp;
-                    }
+                c = R.value[j][j] / sqrt((R.value[j][j]) * (R.value[j][j]) + (R.value[i][j]) * (R.value[i][j]));//вычисляем c12
+                s = R.value[i][j] / sqrt((R.value[j][j]) * (R.value[j][j]) + (R.value[i][j]) * (R.value[i][j]));//вычисляем s12
+
+                for (int k = 0; k < n; k++)
+                {
+                    vspom = T.value[j][k];
+                    T.value[j][k] = T.value[j][k] * c + T.value[i][k] * s;
+                    T.value[i][k] = T.value[i][k] * c - vspom * s;
+                }
+
+                for (int k = 0; k < n; k++)//меняем матрицу А
+                {
+                    vspom = R.value[j][k];
+                    R.value[j][k] = R.value[j][k] * c + R.value[i][k] * s;
+                    R.value[i][k] = R.value[i][k] * c - vspom * s;
+                }
+
             }
         }
     }
-//    std::cout << "QR method matrix R:" << std::endl;
-//    A.print();
-//
-//    std::cout << "QR method matrix T:" << std::endl;
-//    print();
-trunc();
-}
 
-bool buttomabs(const Matrix &A)
-{
-//    for(int i = 0; i != A.size; i++)
-//    {
-//        double sum = 0;
-//        for (int j = 0; j != i; j++)
-//            sum += fabs(A.value[i][j]);
-//        std::cout << sum <<"\n";
-//        if (sum >  pow(10,-4))
-//            return true;
-//    }
-//    return false;
-    for(int i = 0; i != A.size; i++ )
-        if (fabs(A.value[i][i-1]) > pow(10,-4) )
-            return true;
-        return false;
+   // T.trunc();
 }
 
 std::vector<double> eigenvalues(Matrix &A)
@@ -97,21 +87,43 @@ std::vector<double> eigenvalues(Matrix &A)
     std::vector<double> lambda(A.size);
     T.onebyone();
     int iterations = 0;
-    //Ak = Hessenberg(A);
+    Ak = Hessenberg(A);
     for (int n = A.size; n > 0; n--) {
         Ak.size = n;
+        T.size = n;
+        R.size = n;
+        Matrix E(n);
         do {
+            double delta = Ak.value[n-1][n-1];
             iterations++;
-            R = Ak;
-            T.QR(n,R);
+            E.onebyone();
+            //Ak = Ak - E*delta;
+            qr(Ak,R,T, n);
             Ak = R * T;
-        } while (buttomabs(Ak));
+            E.onebyone();
+            //Ak = Ak + E*delta;
+        } while (buttomabs(Ak, n-1));
         lambda[n-1] = Ak.value[n-1][n-1];
     }
-//    for (int i = 0; i != A.size; i++)
-//        lambda[i] = Ak.value[i][i];
-    Ak.print();
-    //алгоритм со
     std::cout << "Number of iterations: " << iterations << "\n";
     return lambda;
 }
+
+//void Matrix::eigenvectors(const Matrix& A, const std::vector<double> lamb)
+//{
+//    onebyone(); // matrix of our vectors
+//    for (int i = 0; i != A.size; i++){
+//        Matrix E(A.size); E.onebyone();
+//        Matrix Ak(A.size); Ak = A - E*lamb[i];
+//        std::vector<double> e_k(A.size);
+//        do {
+//            e_k = value[i];
+//            GaussRight(Ak, value[i]);
+//            GaussLeft(Ak, value[i]);
+//            for (int j = 0; j != A.size; j++)
+//                value[i][j] = value[i][j] / norm(value[i], A.size);
+//        } while (fabs(fabs(skal(value[i], e_k)) -1) > EPS);
+//    }
+//
+//
+//}
