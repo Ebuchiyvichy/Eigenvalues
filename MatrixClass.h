@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <fstream>
 
-double	EPS = 10e-8;
+double	EPS = 10e-5;
 
 class Matrix
 {
@@ -60,7 +60,6 @@ public:
         }
         std::cout << "\n";
     }
-
     void onebyone()
     {
         for (int i = 0; i != size; i++)
@@ -72,13 +71,14 @@ public:
                     value[i][j] = 0;
             }
     }
+    void eigenvectors(const Matrix& A, const std::vector<double> lamb);
     friend void cpy(Matrix &A, Matrix& B)
     {
         for (int i = 0; i != A.size; i++)
             for (int j = 0; j != A.size; j++)
                 B.value[i][j] = A.value[i][j];
     }
-
+    void Relay (const Matrix& A, std::vector<double>& lamb);
     friend Matrix operator + (const Matrix &A, const Matrix &B)
     {
         Matrix C(A.size);
@@ -124,7 +124,7 @@ public:
     {
         for (int i = 0; i != A.size; i++) {
             for (int j = 0; j != A.size; j++)
-                A.value[i][j] = A.value[i][j] * c;
+                A.value[i][j] *=  c;
         }
         return A;
     }
@@ -140,11 +140,35 @@ public:
         }
         return c;
     }
-//     Matrix& operator = (const Matrix &C)
-//    {
-//        for (int i = 0; i != size; i++)
-//            for (int j = 0; j != size; j++)
-//                value[i][j] = C.value[i][j];
-//    }
-    void QR(size_t n, Matrix &A);
+    friend std::vector<double> operator * (std::vector<double> &b, double c)
+    {
+        std::vector<double> a(b.size());
+        for (int i = 0; i != b.size(); i++)
+        {
+            a[i] = b[i]*c;
+        }
+        return a;
+    }
+    friend double operator * (const std::vector<double>&a, const std::vector<double> &b)
+    {
+        double c = 0;
+        for(int i = 0; i = a.size(); i++)
+            c += a[i]*b[i];
+        return c;
+    }
+    friend void delim(Matrix  &A, int k, std::vector<double>& x);
+    friend void vych(Matrix &A, int k, std::vector<double>& x);
+    friend void GaussRight(Matrix &A, std::vector<double>& x);
+    friend void GaussLeft(const Matrix &A, std::vector <double>& x);
 };
+double skal (std::vector<double> a, std::vector <double> b)
+{
+    double sum = 0;
+    for(int i = 0; i != a.size(); i++)
+        sum += a[i]*b[i];
+    return(sum);
+}
+//double pr(std::vector<double> a, std::vector<double> b)
+//{
+//    return (b * (skal(a,b)/skal(b,b)))
+//}
